@@ -1,0 +1,50 @@
+# ==========================================
+# 1. Environment & Sensitive Data (CRITICAL)
+# ==========================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ==========================================
+# 2. Database & Docker Volume Data
+# ==========================================
+# Prevents committing your actual local MySQL database files to GitHub
+/data/
+/db_data/
+*.sql.gz
+
+# ==========================================
+# 3. Frontend Dependencies & Build Output (Vue / Vite / Node)
+# ==========================================
+node_modules/
+/frontend/node_modules/
+/ws-server/node_modules/
+
+# Production build outputs
+dist/
+/frontend/dist/
+.eslintcache
+.vite/
+
+# ==========================================
+# 4. OS & IDE Specific Files
+# ==========================================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# ==========================================
+# 5. Logs & Runtime
+# ==========================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

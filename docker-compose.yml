@@ -1,0 +1,66 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: it_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: impression_track
+      MYSQL_ROOT_PASSWORD: root_secure_password
+      MYSQL_USER: tracking_user
+      MYSQL_PASSWORD: tracking_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - ${PWD}/database/migrations:/docker-entrypoint-initdb.d
+      - ${PWD}/data:/var/lib/mysql
+    networks:
+      - tracking_network
+
+  backend:
+    build: ./backend
+    container_name: it_backend
+    restart: always
+    volumes:
+      - ./backend:/var/www/html
+    networks:
+      - tracking_network
+    depends_on:
+      - db
+
+  webserver:
+    image: nginx:alpine
+    container_name: it_webserver
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+      - ./backend:/var/www/html
+      - ./config/nginx.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - tracking_network
+    depends_on:
+      - backend
+
+  ws_server:
+    build: ./ws-server
+    container_name: it_ws_server
+    restart: always
+    ports:
+      - "8085:8085"
+    networks:
+      - tracking_network
+
+  frontend:
+    build: ./frontend
+    container_name: it_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    networks:
+      - tracking_network
+    depends_on:
+      - ws_server
+
+networks:
+  tracking_network:
+    driver: bridge

@@ -20,12 +20,14 @@ ImpressionTrack is a decoupled, containerized full-stack analytics engine design
 
 ## 📁 Repository Structure
 
+<pre><code>
 impression-track/
 ├── backend/            # Stateless PHP ingestion tracking & API endpoint
 ├── ws-server/          # Node.js WebSocket microservice
 ├── frontend/           # Vue 3 application source code (Vite-powered)
 ├── database/           # Auto-provisioned MySQL migration schemas
 └── docker-compose.yml  # Multi-container multi-network mesh layer
+</code></pre>
 
 ---
 

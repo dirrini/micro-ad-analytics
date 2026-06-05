@@ -32,5 +32,6 @@ jobs:
               git pull origin main
             fi
 
-            docker compose down --remove-orphans
+            # 🛠️ Added "|| true" so the script doesn't fail if there's nothing to stop yet
+            docker compose down --remove-orphans || true
             docker compose up -d --build

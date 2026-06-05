@@ -50,11 +50,17 @@ export default {
     const campaignsData = ref([]);
     const browsersData = ref([]);
     let ws = null;
+    const API_URL =
+      import.meta.env.VITE_API_URL || '';
+
+    const WS_URL =
+      import.meta.env.VITE_WS_URL ||
+      `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
 
     // Fetch historical data snapshot from backend API
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api.php');
+        const response = await fetch(`${API_URL}/api.php`);
         const result = await response.json();
         if (result.status === 'success') {
           campaignsData.value = result.data.campaigns;
@@ -67,7 +73,7 @@ export default {
 
     // Initialize real-time WebSocket connection listener
     const initWebSocket = () => {
-      ws = new WebSocket('ws://localhost:8085');
+      ws = new WebSocket(WS_URL);
 
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);

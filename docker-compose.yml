@@ -20,6 +20,8 @@ services:
     build: ./backend
     container_name: it_backend
     restart: always
+    env_file:
+      - .env
     networks:
       - tracking_network
     depends_on:
@@ -29,6 +31,8 @@ services:
     image: nginx:alpine
     container_name: it_webserver
     restart: always
+    env_file:
+      - .env
     ports:
       - "127.0.0.1:8080:80" # 🔒 Locked down to accept traffic ONLY from local host Nginx proxy
     volumes:
@@ -52,6 +56,8 @@ services:
     build: ./frontend
     container_name: it_frontend
     restart: always
+    env_file:
+      - .env
     ports:
       - "127.0.0.1:3000:80" # 🔒 Locked down to accept traffic ONLY from local host Nginx proxy
     networks:

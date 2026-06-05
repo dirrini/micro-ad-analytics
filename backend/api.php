@@ -8,15 +8,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 header('Content-Type: application/json');
 
 try {
+  $dsn = sprintf(
+    'mysql:host=%s;dbname=%s;charset=utf8mb4',
+    getenv('DB_HOST') ?: 'db',
+    getenv('DB_NAME')
+  );
 
-    $dsn = "mysql:host=db;dbname=impression_track;charset=utf8mb4";
-    $user = "tracking_user";
-    $password = "tracking_password";
-
-    $pdo = new PDO($dsn, $user, $password, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
+  $pdo = new PDO(
+    $dsn,
+    getenv('DB_USER'),
+    getenv('DB_PASSWORD'),
+    [
+      PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+      PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]
+  );
 
   // Fetch total counts per campaign
   $campaignQuery = $pdo->query("

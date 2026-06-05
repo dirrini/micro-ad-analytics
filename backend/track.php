@@ -44,14 +44,21 @@ elseif (preg_match('/iPhone|iPad/i', $userAgent)) { $platform = 'iOS'; }
 
 // Insert into Database using PDO (Best practice)
 try {
-  $dsn = "mysql:host=db;dbname=impression_track;charset=utf8mb4";
-  $user = "tracking_user";
-  $password = "tracking_password";
+  $dsn = sprintf(
+    'mysql:host=%s;dbname=%s;charset=utf8mb4',
+    getenv('DB_HOST') ?: 'db',
+    getenv('DB_NAME')
+  );
 
-  $pdo = new PDO($dsn, $user, $password, [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-  ]);
+  $pdo = new PDO(
+    $dsn,
+    getenv('DB_USER'),
+    getenv('DB_PASSWORD'),
+    [
+      PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+      PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]
+  );
 
   $stmt = $pdo->prepare("
     INSERT INTO ad_impressions (campaign_id, ip_address, user_agent, browser, platform) 

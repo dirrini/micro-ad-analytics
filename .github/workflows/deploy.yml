@@ -51,6 +51,7 @@ jobs:
           script_stop: true
           debug: true
           script: |
+            set -xe
             # Ensure the root directory exists
             mkdir -p ~/impression-track
             cd ~/impression-track

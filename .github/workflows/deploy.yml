@@ -9,6 +9,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: Production
+
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v6
@@ -16,22 +17,27 @@ jobs:
       - name: Execute Remote SSH Deployment Script
         uses: appleboy/ssh-action@v1.0.3
         with:
-          # GitHub will now correctly look inside the Production environment for these
           host: ${{ secrets.OCI_SERVER_IP }}
           username: ${{ secrets.OCI_SERVER_USER }}
           key: ${{ secrets.OCI_SSH_KEY }}
           port: 22
           script_stop: true
+          debug: true
           script: |
+            # 1. Force path structure stability
             mkdir -p ~/impression-track
             cd ~/impression-track
 
+            # 2. Re-initialize Git safely without empty-directory errors
             if [ ! -d ".git" ]; then
-              git clone https://github.com/${{ github.repository }}.git .
-            else
-              git pull origin main
+              git init
+              git remote add origin https://github.com/${{ github.repository }}.git
             fi
 
-            # 🛠️ Added "|| true" so the script doesn't fail if there's nothing to stop yet
-            docker compose down --remove-orphans || true
-            docker compose up -d --build
+            # 3. Clean tracking sync
+            git fetch --all
+            git reset --hard origin/main
+
+            # 4. Use sudo wrapper to explicitly bypass any cached system socket locks
+            sudo docker compose down --remove-orphans || true
+            sudo docker compose up -d --build

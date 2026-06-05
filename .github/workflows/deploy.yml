@@ -51,19 +51,19 @@ jobs:
           script_stop: true
           debug: true
           script: |
-            set -xe
+            set -x
             # Ensure the root directory exists
             mkdir -p ~/impression-track
             cd ~/impression-track
 
-            # 🛠️ FIXED SELF-HEALING GIT CHECK: No branch creation on empty repos
-            if [ ! -d ".git" ]; then
-              echo "🔄 Target directory is empty. Initializing Git..."
+            if [ -d ".git" ]
+            then
+              echo "Git repository detected"
+              git remote set-url origin https://github.com/${{ github.repository }}.git
+            else
+              echo "Initializing repository"
               git init
               git remote add origin https://github.com/${{ github.repository }}.git
-            else
-              echo "✅ Git repository detected. Updating upstream origin..."
-              git remote set-url origin https://github.com/${{ github.repository }}.git
             fi
 
             # Pull down the metadata explicitly from upstream main

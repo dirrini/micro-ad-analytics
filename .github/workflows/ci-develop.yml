@@ -1,0 +1,80 @@
+name: Continuous Integration - Development Staging
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  validate-frontend:
+    name: Validate & Build Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v5
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      # Verifies Vite compilation succeeds without Javascript errors
+      - name: Test Production Compilation
+        run: |
+          cd frontend
+          npm run build
+
+  validate-backend:
+    name: Lint & Validate PHP Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v6
+
+      - name: Setup PHP Runtime Environment
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo, pdo_mysql, curl
+          tools: phpintle, none
+
+      # 🛠️ SYNTAX CHECKER: Automatically scans your new REST routing logic for typos or missing semicolons
+      - name: Check PHP Syntax (Linting)
+        run: |
+          echo "Scanning PHP files for syntax integrity..."
+          find . -type f -name "*.php" -not -path "*/node_modules/*" -exec php -l {} \; | grep -v "No syntax errors detected" && exit 1 || true
+
+  validate-docker:
+    name: Validate Docker Infrastructure Configurations
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v6
+
+      # 🛠️ THE FIX: Dynamically generate a temporary .env file so Docker Compose doesn't crash
+      - name: Create Temporary .env File for Validation
+        run: |
+          touch .env
+          echo "DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+
+      # Validates that your docker-compose syntax remains perfectly formatted
+      - name: Validate Docker Compose Configuration File
+        run: |
+          docker compose config

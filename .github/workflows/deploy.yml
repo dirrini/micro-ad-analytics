@@ -51,29 +51,60 @@ jobs:
           script_stop: true
           debug: true
           script: |
-            set -x
-            # Ensure the root directory exists
+            set -xe # -e ensures the script fails immediately if any command returns a non-zero status
+            
             mkdir -p ~/impression-track
             cd ~/impression-track
 
+            # Capture the current working commit hash in case we need to roll back
+            PREVIOUS_STABLE_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "")
+
             if [ -d ".git" ]
             then
-              echo "Git repository detected"
               git remote set-url origin https://github.com/${{ github.repository }}.git
             else
-              echo "Initializing repository"
               git init
               git remote add origin https://github.com/${{ github.repository }}.git
             fi
 
-            # Pull down the metadata explicitly from upstream main
             git fetch origin main
-
-            # Force synchronization of the files onto the server disk
             git reset --hard origin/main
 
-            # Spin down existing container infrastructure safely
+            # Spin down and recreate the containers cleanly
             sudo docker compose down --remove-orphans || true
-            
-            # Rebuild and run the immutable containers from the fresh files
             sudo docker compose up -d --build
+
+            # 📡 --- LIVE PRODUCTION HEALTH CHECK LOOP ---
+            echo "Waiting for the backend API to wake up..."
+            HEALTH_PASSED=false
+
+            for i in {1..6}; do
+              # Pings the container locally via Nginx proxy on port 8080
+              STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/analytics || echo "000")
+              
+              if [ "$STATUS_CODE" -eq 200 ]; then
+                echo "✅ Health check passed! API returned HTTP 200."
+                HEALTH_PASSED=true
+                break
+              fi
+
+              echo "⚠️ Attempt $i: API returned HTTP $STATUS_CODE. Retrying in 5 seconds..."
+              sleep 5
+            done
+
+            # 🚨 --- AUTOMATED EMERGENCY ROLLBACK TRIGGER ---
+            if [ "$HEALTH_PASSED" = false ]; then
+              echo "❌ CRITICAL: Health check failed! Initiating automated rollback..."
+              
+              if [ -not -z "$PREVIOUS_STABLE_COMMIT" ]; then
+                echo "Rolling back server state to stable commit: $PREVIOUS_STABLE_COMMIT"
+                git reset --hard "$PREVIOUS_STABLE_COMMIT"
+                sudo docker compose down --remove-orphans || true
+                sudo docker compose up -d --build --force-recreate
+              else
+                echo "No previous stable commit history found on disk to roll back to!"
+              fi
+              
+              echo "Production restored to previous stable version. Failing the GitHub Actions build now."
+              exit 1
+            fi

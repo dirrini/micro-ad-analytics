@@ -57,10 +57,9 @@ export default {
       import.meta.env.VITE_WS_URL ||
       `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
 
-    // Fetch historical data snapshot from backend API
     const fetchData = async () => {
       try {
-        const response = await fetch(`${API_URL}/api.php`);
+        const response = await fetch(`${API_URL}/api/analytics`);
         const result = await response.json();
         if (result.status === 'success') {
           campaignsData.value = result.data.campaigns;

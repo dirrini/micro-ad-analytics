@@ -65,12 +65,16 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v6
 
-      # 🛠️ FIX: Explicitly inject the secrets into the step's environment execution layer
+      # 🛠️ THE FIX: Dynamically generate a temporary .env file so Docker Compose doesn't crash
+      - name: Create Temporary .env File for Validation
+        run: |
+          touch .env
+          echo "DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+
+      # Validates that your docker-compose syntax remains perfectly formatted
       - name: Validate Docker Compose Configuration File
-        env:
-          DB_ROOT_PASSWORD: ${{ secrets.DB_ROOT_PASSWORD }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: ${{ secrets.DB_NAME }} # Include this if your compose file uses it too
         run: |
           docker compose config
